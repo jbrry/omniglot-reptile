@@ -8,6 +8,8 @@ This will mainly be a copy of the TensorFlow version here (https://github.com/op
 ```
 conda create -n omniglot-reptile python=3.7
 conda activate omniglot-reptile
+
+pip install -r requirements.txt
 ```
 
 # Fetch data
