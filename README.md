@@ -4,6 +4,17 @@ REPTILE algorithm: https://arxiv.org/abs/1803.02999
 
 This will mainly be a copy of the TensorFlow version here (https://github.com/openai/supervised-reptile), re-implemented for self-study.
 
+# Setup
+```
+conda create -n omniglot-reptile python=3.7
+conda activate omniglot-reptile
+```
+
+# Fetch data
+```
+./scripts/fetch_omniglot_data.sh
+```
+
 # Reproducing training runs
 
 ```
