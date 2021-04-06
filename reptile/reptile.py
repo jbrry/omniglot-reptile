@@ -17,6 +17,11 @@ class Reptile:
     and transductive. In transductive mode, information is
     allowed to leak between test samples via BatchNorm.
     Typically, MAML is used in a transductive manner.
+
+    NOTE: If k = 1, this algorithm would correspond to “joint training”
+        performing SGD on the mixture of all tasks, where k is the number of examples
+        from each task.
+        When k > 1, this corresponds to higher-order derivatives of the loss function.
     """
     def __init__(self, session, variables=None, transductive=False, pre_step_op=None):
         self.session = session
@@ -57,10 +62,19 @@ class Reptile:
           meta_step_size: interpolation coefficient.
           meta_batch_size: how many inner-loops to run.
         """
+
+        # Initial parameters (Phi/ Φ)
         old_vars = self._model_state.export_variables()
+        # W
         new_vars = []
+
+        # Iterate
         for _ in range(meta_batch_size):
+            # Sample
             mini_dataset = _sample_mini_dataset(dataset, num_classes, num_shots)
+
+            # each mini-batch corresponds to an example k_i and produces grad g_i.
+            # e.g. when k=5, there are 5 grads.
             for batch in _mini_batches(mini_dataset, inner_batch_size, inner_iters, replacement):
                 inputs, labels = zip(*batch)
                 if self._pre_step_op:
@@ -69,6 +83,12 @@ class Reptile:
             new_vars.append(self._model_state.export_variables())
             self._model_state.import_variables(old_vars)
         new_vars = average_vars(new_vars)
+
+        # interpolate_vars:
+        # first subtract Phi from W and then scale by epsilon:
+        #   ϵ(W - Phi)
+        # add the result with the old paramaters (Φ) to get the final parameters:
+        #   Φ ← Φ + ϵ(W − Φ)
         self._model_state.import_variables(interpolate_vars(old_vars, new_vars, meta_step_size))
 
     def evaluate(self,
@@ -208,7 +228,9 @@ def _sample_mini_dataset(dataset, num_classes, num_shots):
     shuffled = list(dataset)
     random.shuffle(shuffled)
     for class_idx, class_obj in enumerate(shuffled[:num_classes]):
-        for sample in class_obj.sample(num_shots):
+        print(f"class {class_idx}, {class_obj.dir_path}")
+        for i, sample in enumerate(class_obj.sample(num_shots)):
+            print(i)
             yield (sample, class_idx)
 
 def _mini_batches(samples, batch_size, num_batches, replacement):

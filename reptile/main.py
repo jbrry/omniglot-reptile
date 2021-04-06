@@ -126,14 +126,19 @@ def train(sess,
     if not os.path.exists(save_dir):
         os.mkdir(save_dir)
     saver = tf.train.Saver()
+
     reptile = reptile_fn(sess,
                          transductive=transductive,
                          pre_step_op=weight_decay(weight_decay_rate))
+
+
+    # Log metrics
     accuracy_ph = tf.placeholder(tf.float32, shape=())
     tf.summary.scalar('accuracy', accuracy_ph)
     merged = tf.summary.merge_all()
     train_writer = tf.summary.FileWriter(os.path.join(save_dir, 'train'), sess.graph)
     test_writer = tf.summary.FileWriter(os.path.join(save_dir, 'test'), sess.graph)
+    
     tf.global_variables_initializer().run()
     sess.run(tf.global_variables_initializer())
     for i in range(meta_iters):
@@ -181,6 +186,7 @@ def evaluate(sess,
     reptile = reptile_fn(sess,
                          transductive=transductive,
                          pre_step_op=weight_decay(weight_decay_rate))
+
     total_correct = 0
     for _ in range(num_samples):
         total_correct += reptile.evaluate(dataset, model.input_ph, model.label_ph,
@@ -193,17 +199,13 @@ def evaluate(sess,
 
 def main(args=None):
     args = parse_args(args=args)
-    print(args)
 
     random.seed(args.seed)
 
     train_set, test_set = split_dataset(read_dataset(args.data_dir))
-
-    logging.info(f"Loaded {len(train_set)} training examples.")
-    logging.info(f"Loaded {len(test_set)} test examples.")
     
     train_set = list(augment_dataset(train_set))
-    test_set = list(test_set)
+    test_set = list(test_set)   
 
     model = OmniglotModel(args.classes, args.optimizer, args.learning_rate)
 

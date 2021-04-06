@@ -3,6 +3,7 @@ import random
 
 from PIL import Image
 import numpy as np
+import logging
 
 def read_dataset(data_dir):
     """
@@ -28,10 +29,16 @@ def split_dataset(dataset, num_train=1200):
     Split the dataset into a training and test set.
     Args:
       dataset: an iterable of Characters.
+      num_train: how many training examples (Characters).
     Returns:
       A tuple (train, test) of Character sequences.
     """
     all_data = list(dataset)
+
+    logging.info(f"Found {len(all_data)} examples.")
+    logging.info(f"Creating {len(all_data[:num_train])} training examples.")
+    logging.info(f"Creating {len(all_data[num_train:])} test examples.")
+
     random.shuffle(all_data)
     return all_data[:num_train], all_data[num_train:]
 
@@ -60,6 +67,9 @@ class Character:
     def sample(self, num_images):
         """
         Sample images (as numpy arrays) from the class.
+
+        Args:
+          num_images: the number of examples to sample per data class (e.g. train_shots).
         Returns:
           A sequence of 28x28 numpy arrays.
           Each pixel ranges from 0 to 1.
